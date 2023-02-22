@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="Harry">
+    <title>Azure Firewall Policy Optimizer</title>
+
+    <script src="https://code.jquery.com/jquery-3.6.3.min.js" integrity="sha256-pvPw+upLPUjgMXY0G+8O0xUf+/Im1MZjXxxgOcBQBXU=" crossorigin="anonymous"></script>
+
+    <!-- Bootstrap core CSS -->
+	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+
+    <style>
+      .bd-placeholder-img {
+        font-size: 1.125rem;
+        text-anchor: middle;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        user-select: none;
+      }
+
+      @media (min-width: 768px) {
+        .bd-placeholder-img-lg {
+          font-size: 3.5rem;
+        }
+      }
+    </style>
+
+    
+    <!-- Custom styles for this template -->
+    <link href="starter-template.css" rel="stylesheet">
+  </head>
+  <body>
+    
+  <div class="col-lg-8 mx-auto p-3 py-md-5">
+    <header class="d-flex align-items-center pb-3 mb-5 border-bottom">
+      <a href="/" class="d-flex align-items-center text-dark text-decoration-none">
+        <img src="firewall.svg" width="40px">
+        <span class="fs-4">&nbsp; Azure Firewall Policy Optimizer</span>
+      </a>
+    </header>
+
+    <main class="container">
+      <div class="row">
+        <div class="col col-md-4">
+          <p class="fs-5 mb-3">
+            <label for="json-input" class="form-label">ARM template (JSON)</label>
+            <textarea class="form-control" id="json-input" rows="3"></textarea>
+          </p>
+
+          <div class="mb-3">
+            <h6 class="form-label">Optimize Type</h6>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="optimize-type" id="optimize-type-subnet" checked>
+              <label class="form-check-label" for="optimize-type-subnet">Subnet <small>(NOT works with AppplicationRule)</small></label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="optimize-type" id="optimize-type-fqdn">
+              <label class="form-check-label" for="optimize-type-fqdn">FQDN <small>(NOT works with NatRule)</small></label>
+            </div>
+          </div>
+    
+          <div class="mb-3">
+            <h6 class="form-label">Optimize Direction</h6>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="optimize-direction" id="optimize-direction-target" checked>
+              <label class="form-check-label" for="optimize-direction-target">Target</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="optimize-direction" id="optimize-direction-source">
+              <label class="form-check-label" for="optimize-direction-source">Source</label>
+            </div>
+          </div>
+    
+          <div class="mb-5">
+            <a class="btn btn-primary btn-lg px-4" id="optimize-btn">Optimize</a>
+          </div>
+        </div>
+        
+        <div class="col col-md-8">
+          <label for="json-input" class="form-label fs-5">Rules that can be optimized</label>
+          <ul class="list-group rules-list"></ul>
+        </div>
+      </div>
+
+      <hr class="col-12 mb-5">
+
+      <div class="row g-5">
+        <div class="col-md-6">
+          <h2>Guides</h2>
+          <p>Read more detailed instructions and documentation on Azure Firewall Policy.</p>
+          <ul class="icon-list">
+            <li><a href="https://learn.microsoft.com/en-us/azure/templates/microsoft.network/azurefirewalls?pivots=deployment-language-arm-template" target="_blank">Microsoft.Network/azureFirewalls ARM template</a></li>
+            <li><a href="https://learn.microsoft.com/en-us/azure/firewall/policy-rule-sets" target="_blank">Azure Firewall Policy rule sets</a></li>
+            <li><a href="https://learn.microsoft.com/en-us/azure/firewall/rule-processing" target="_blank">Azure Firewall rule processing logic</a></li>
+          </ul>
+        </div>
+      </div>
+    </main>
+    <footer class="pt-5 my-5 text-muted border-top">
+      Created by Nguyễn Việt Tùng (Harry) &middot; &copy; 2023
+    </footer>
+  </div>
+    
+  <script>
+
+  const ENUM_RULE_TYPE = {
+    NatRule: 'NatRule',
+    NetworkRule: 'NetworkRule',
+    ApplicationRule: 'ApplicationRule'
+  };
+
+  const ENUM_TARGET_SUBNET = {
+    NatRule: 'destinationAddresses',
+    NetworkRule: 'destinationAddresses'
+  };
+  const ENUM_TARGET_FQDN = {
+    NatRule: 'destinationFqdns',
+    NetworkRule: 'destinationFqdns',
+    ApplicationRule: 'targetFqdns'
+  };
+
+  const ENUM_SOURCE_SUBNET = {
+    NatRule: 'sourceAddresses',
+    NetworkRule: 'sourceAddresses',
+    ApplicationRule: 'sourceAddresses'
+  };
+
+  $('#json-input').on('input', function(){
+    let $this = $(this);
+    try {
+      let jsonTxt = $this.val();
+      let jsonObject = JSON.parse(jsonTxt);
+      $this.removeClass('is-invalid').addClass('is-valid');
+    }
+    catch (err) {
+      $this.removeClass('is-valid').addClass('is-invalid');
+    }
+  });
+
+  $('#optimize-btn').click(function(){
+    let $jsonInput = $('#json-input');
+    $jsonInput.trigger('input');
+
+    let jsonTxt = $jsonInput.val();
+    let jsonObject = JSON.parse(jsonTxt);
+
+    let optimizeType = $('[name=optimize-type]:checked').attr('id');
+    let optimizeDirection = $('[name=optimize-direction]:checked').attr('id');
+
+    let optimizeGroups = {};
+    optimizeGroups[ENUM_RULE_TYPE.NatRule] = {};
+    optimizeGroups[ENUM_RULE_TYPE.NetworkRule] = {};
+    optimizeGroups[ENUM_RULE_TYPE.ApplicationRule] = {};
+    
+    let ruleCollectionGroups = jsonObject.parameters.ruleCollectionGroups.value;
+    
+    $.each(ruleCollectionGroups, function(){
+      let ruleCollectionGroup = this;
+      let ruleCollections = ruleCollectionGroup.properties.ruleCollections;
+      
+      $.each(ruleCollections, function(){
+        let ruleCollection = this;
+        let rules = ruleCollection.rules;
+        
+        $.each(rules, function(){
+          let rule = this;
+          let ruleType = rule.ruleType; //['NatRule', 'NetworkRule', 'ApplicationRule']
+          let propName = ''; let valueName = '';
+          
+          if(optimizeDirection == 'optimize-direction-target') {
+            propName = optimizeType == 'optimize-type-subnet' ? ENUM_TARGET_SUBNET[ruleType] : ENUM_TARGET_FQDN[ruleType];
+            valueName = ENUM_SOURCE_SUBNET[ruleType];
+          }
+          if(optimizeDirection == 'optimize-direction-source') {
+            propName = ENUM_SOURCE_SUBNET[ruleType];
+            valueName = optimizeType == 'optimize-type-subnet' ? ENUM_TARGET_SUBNET[ruleType] : ENUM_TARGET_FQDN[ruleType];
+          }
+
+          if(!rule[propName] || !rule[valueName]) {
+            return;
+          }
+
+          let groupName = rule[propName].sort().join(); 
+          let groupValue = rule.name;
+          let groupObject = optimizeGroups[ruleType][groupName];
+          if(groupObject) {
+            groupObject.push(groupValue);
+          } else {
+            optimizeGroups[ruleType][groupName] = [groupValue];
+          }
+
+        });
+      });
+    });
+
+    console.log(optimizeGroups);
+
+    let $rulesList = $('.rules-list');
+    $rulesList.empty();
+
+    for(var type in optimizeGroups){
+      let $type = $(`<h5 class="form-label mt-3">${type}</h5>`);
+      $rulesList.append($type);
+
+      for(var group in optimizeGroups[type]){
+        let values = optimizeGroups[type][group];
+        if(values.length < 2) {
+          break;
+        }
+        
+        let $group = $(`<li class="list-group-item"></li>`);
+        $group.append(`<div class="d-flex w-100 justify-content-between"><strong>${group}</strong><span class="badge bg-primary rounded-pill">${values.length}</span></div>`);
+        $rulesList.append($group);
+
+        for(var value of values){
+          $group.append(`<p>${value}</p>`);
+        }
+      }
+    }
+
+  });
+  </script>
+    
+</body>
+</html>
