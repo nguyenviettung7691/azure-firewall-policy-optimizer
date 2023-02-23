@@ -6,35 +6,33 @@
     <meta name="description" content="">
     <meta name="author" content="Harry">
     <title>Azure Firewall Policy Optimizer</title>
-
+    <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-3.6.3.min.js" integrity="sha256-pvPw+upLPUjgMXY0G+8O0xUf+/Im1MZjXxxgOcBQBXU=" crossorigin="anonymous"></script>
-
     <!-- Bootstrap core CSS -->
-	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
-	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
-
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+    <!-- RainbowJSON -->
+    <link href="rainbowJSON/css/jquery.rainbowJSON.css" rel="stylesheet">
+    <script src="rainbowJSON/js/jquery.rainbowJSON.js"></script>
+    <!-- Custom CSS -->
     <style>
-      .bd-placeholder-img {
-        font-size: 1.125rem;
-        text-anchor: middle;
-        -webkit-user-select: none;
-        -moz-user-select: none;
-        user-select: none;
+      .badge {
+        max-height: 1.4rem;
       }
-
-      @media (min-width: 768px) {
-        .bd-placeholder-img-lg {
-          font-size: 3.5rem;
-        }
+      .heading {
+        word-break: break-word;
+      }
+      .card.from:before {
+        content: "Current rules";
+      }
+      .card.to:before {
+        content: "Merged rule";
       }
     </style>
-
-    
-    <!-- Custom styles for this template -->
-    <link href="starter-template.css" rel="stylesheet">
   </head>
   <body>
     
+  <!-- Main -->
   <div class="col-lg-8 mx-auto p-3 py-md-5">
     <header class="d-flex align-items-center pb-3 mb-5 border-bottom">
       <a href="/" class="d-flex align-items-center text-dark text-decoration-none">
@@ -45,7 +43,7 @@
 
     <main class="container">
       <div class="row">
-        <div class="col col-md-4">
+        <div class="col col-md-3">
           <p class="fs-5 mb-3">
             <label for="json-input" class="form-label">ARM template (JSON)</label>
             <textarea class="form-control" id="json-input" rows="3"></textarea>
@@ -76,13 +74,18 @@
           </div>
     
           <div class="mb-5">
-            <a class="btn btn-primary btn-lg px-4" id="optimize-btn">Optimize</a>
+            <a class="btn btn-primary btn-lg px-4" id="analyze-btn">Analyze</a>
           </div>
         </div>
         
-        <div class="col col-md-8">
+        <div class="col col-md-9">
           <label for="json-input" class="form-label fs-5">Rules that can be optimized</label>
-          <ul class="list-group rules-list"></ul>
+          <ul class="list-group rules-list">
+            <div class="alert alert-primary d-flex align-items-center" role="alert">
+              <svg class="bi flex-shrink-0 me-2" width="24" height="24" role="img" aria-label="Info:" fill="currentColor" viewBox="0 0 16 16"><path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/></svg>
+              <div>No data to analyze. First, input the ARM template JSON and press "Analyze".</div>
+            </div>
+          </ul>
         </div>
       </div>
 
@@ -103,6 +106,25 @@
     <footer class="pt-5 my-5 text-muted border-top">
       Created by Nguyễn Việt Tùng (Harry) &middot; &copy; 2023
     </footer>
+  </div>
+
+  <!-- Modal -->
+  <div class="modal fade" id="optimize-modal" tabindex="-1" aria-labelledby="optimize-modal" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="optimize-modal">Optimization confirm</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          These rules will be merged into a single new rule. It's named "Merged rule" and will be added to the top of the current rule collection. New changes will be reflected right away.
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary">Confirm</button>
+        </div>
+      </div>
+    </div>
   </div>
     
   <script>
@@ -129,6 +151,14 @@
     ApplicationRule: 'sourceAddresses'
   };
 
+  const ENUM_RULE_COLLECTION_TYPE = {
+    NatRule: 'FirewallPolicyNatRuleCollection',
+    NetworkRule: 'FirewallPolicyFilterRuleCollection',
+    ApplicationRule: 'FirewallPolicyFilterRuleCollection'
+  };
+
+  let optimizeModal = new bootstrap.Modal(document.getElementById('optimize-modal'));
+
   $('#json-input').on('input', function(){
     let $this = $(this);
     try {
@@ -141,7 +171,7 @@
     }
   });
 
-  $('#optimize-btn').click(function(){
+  $('#analyze-btn').click(function(){
     let $jsonInput = $('#json-input');
     $jsonInput.trigger('input');
 
@@ -188,6 +218,7 @@
           let groupValue = rule.name;
           let groupObject = optimizeGroups[ruleType][groupName];
           if(groupObject) {
+            //TODO: condition check: NatRule -> check that translatedAddress, translatedPort are the same -> can be optimized
             groupObject.push(groupValue);
           } else {
             optimizeGroups[ruleType][groupName] = [groupValue];
@@ -202,23 +233,157 @@
     let $rulesList = $('.rules-list');
     $rulesList.empty();
 
-    for(var type in optimizeGroups){
+    for(let type in optimizeGroups){
       let $type = $(`<h5 class="form-label mt-3">${type}</h5>`);
       $rulesList.append($type);
+      
+      let groupList = Object.keys(optimizeGroups[type]);
 
-      for(var group in optimizeGroups[type]){
+      for(let group of groupList){
         let values = optimizeGroups[type][group];
+
         if(values.length < 2) {
-          break;
+          continue;
         }
         
         let $group = $(`<li class="list-group-item"></li>`);
-        $group.append(`<div class="d-flex w-100 justify-content-between"><strong>${group}</strong><span class="badge bg-primary rounded-pill">${values.length}</span></div>`);
+        $group.append(`<div class="d-flex w-100 justify-content-between"><strong class="heading">${group}</strong><span class="badge bg-primary rounded-pill">${values.length}</span></div>`);
         $rulesList.append($group);
 
-        for(var value of values){
-          $group.append(`<p>${value}</p>`);
+        for(let value of values){
+          $group.append(`<p class="rule-name">${value}</p>`);
         }
+
+        let buttonId = `btn-${group}`; buttonId = buttonId.replaceAll('.', 'dot').replaceAll('/', 'slash').replaceAll(',', 'comma').replaceAll('*', 'star');
+        let $buttons = $(`<div class="mb-2" data-type="${type}"></div>`);
+
+        //Optimize Function
+        let $btnOptimize = $(`<button class="btn btn-primary btn-optimize" type="button">Optimize</button>`);
+        $buttons.append($btnOptimize);
+        $btnOptimize.click(function(){
+          optimizeModal.show();
+
+          $(optimizeModal['_dialog']).find('.btn-primary').off('click').click(function(){
+            let jsonTxt = $jsonInput.val();
+            let jsonObject = JSON.parse(jsonTxt);
+
+            let ruleCollectionGroups = jsonObject.parameters.ruleCollectionGroups.value;
+      
+            $.each(ruleCollectionGroups, function(){
+              let ruleCollectionGroup = this;
+              let ruleCollections = ruleCollectionGroup.properties.ruleCollections;
+              
+              $.each(ruleCollections, function(){
+                let ruleCollection = this;
+                let rules = ruleCollection.rules;
+                let ruleRemovalIndexes = [];
+                
+                let filteredRules = rules.filter(function(rule, index){
+                  let willFilter = values.includes(rule.name);
+                  if(willFilter) { ruleRemovalIndexes.push(index); }
+                  return willFilter;
+                });
+
+                if(filteredRules.length > 1) {
+                  let mergedRule = JSON.parse(JSON.stringify(filteredRules[0])); //init mergedRule as first rule in the filtered list
+                  mergedRule.name = "Merged rule";
+                  filteredRules.forEach(function(rule, index){
+                    if(index < 1) { return; }
+                    mergedRule.ipProtocols = mergedRule.ipProtocols.concat(rule.ipProtocols.filter((item) => mergedRule.ipProtocols.indexOf(item) < 0));
+                    mergedRule.sourceAddresses = mergedRule.sourceAddresses.concat(rule.sourceAddresses.filter((item) => mergedRule.sourceAddresses.indexOf(item) < 0));
+                    mergedRule.destinationAddresses = mergedRule.destinationAddresses.concat(rule.destinationAddresses.filter((item) => mergedRule.destinationAddresses.indexOf(item) < 0));
+                    mergedRule.destinationPorts = mergedRule.destinationPorts.concat(rule.destinationPorts.filter((item) => mergedRule.destinationPorts.indexOf(item) < 0));
+                  });
+
+                  while(ruleRemovalIndexes.length) {
+                    rules.splice(ruleRemovalIndexes.pop(), 1);
+                  }
+                  rules.unshift(mergedRule);
+                  $jsonInput.val(JSON.stringify(jsonObject)).trigger('input');
+                  $('#analyze-btn').click();
+                }
+              });
+            });
+
+            optimizeModal.hide();
+          });
+        });
+
+        //Preview Function
+        let $btnPreview = $(`<button class="btn btn-link btn-preview" type="button" data-bs-toggle="collapse" data-bs-target="#${buttonId}" aria-expanded="false" aria-controls="${buttonId}">Preview solution</button>`);
+        $buttons.append($btnPreview);
+        $btnPreview.click(function(){
+          let jsonTxt = $jsonInput.val();
+          let jsonObject = JSON.parse(jsonTxt);
+
+          let ruleCollectionGroups = jsonObject.parameters.ruleCollectionGroups.value;
+    
+          $.each(ruleCollectionGroups, function(){
+            let ruleCollectionGroup = this;
+            let ruleCollections = ruleCollectionGroup.properties.ruleCollections;
+            
+            $.each(ruleCollections, function(){
+              let ruleCollection = this;
+              let rules = ruleCollection.rules;
+              
+              let filteredRules = rules.filter(function(rule){
+                return values.includes(rule.name);
+              });
+
+              if(filteredRules.length > 1) {
+                let mergedRule = JSON.parse(JSON.stringify(filteredRules[0])); //init mergedRule as first rule in the filtered list
+                mergedRule.name = "Merged rule";
+                filteredRules.forEach(function(rule, index){
+                  if(index < 1) { return; }
+                  mergedRule.ipProtocols = mergedRule.ipProtocols.concat(rule.ipProtocols.filter((item) => mergedRule.ipProtocols.indexOf(item) < 0));
+                  mergedRule.sourceAddresses = mergedRule.sourceAddresses.concat(rule.sourceAddresses.filter((item) => mergedRule.sourceAddresses.indexOf(item) < 0));
+                  mergedRule.destinationAddresses = mergedRule.destinationAddresses.concat(rule.destinationAddresses.filter((item) => mergedRule.destinationAddresses.indexOf(item) < 0));
+                  mergedRule.destinationPorts = mergedRule.destinationPorts.concat(rule.destinationPorts.filter((item) => mergedRule.destinationPorts.indexOf(item) < 0));
+                });
+
+                $(`.preview#${buttonId}`).children('.from').rainbowJSON({
+                  // maximum elements per object that will be printed
+                  maxElements: 0, 
+                  // maximum depth for recursive printing
+                  maxDepth: 0, 
+                  // json as object or in string format (if empty, html of the DOM object will be used)
+                  json: filteredRules, 
+                  // // background color of the div, which will be used for shading
+                  bgColor: '#fff8f5' 
+                });
+
+                $(`.preview#${buttonId}`).children('.to').rainbowJSON({
+                  // maximum elements per object that will be printed
+                  maxElements: 0, 
+                  // maximum depth for recursive printing
+                  maxDepth: 0, 
+                  // json as object or in string format (if empty, html of the DOM object will be used)
+                  json: mergedRule, 
+                  // // background color of the div, which will be used for shading
+                  bgColor: '#F5FAFF' 
+                });
+              }
+
+            });
+          });
+
+          if($(`.preview#${buttonId}`).children('.to').is(':empty')){
+            $(`.preview#${buttonId}`).children('.to').add($(`.preview#${buttonId}`).children('.from'))
+                                    .append(`<div class="alert alert-warning d-flex align-items-center" role="alert">
+                                              <svg class="bi flex-shrink-0 me-2" width="24" height="24" role="img" aria-label="Warning:" fill="currentColor" viewBox="0 0 16 16">
+                                                <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+                                              </svg>
+                                              <div>These rules are not in the same collection! To allow optimization, put them in the same collection where you want them to be merged.</div>
+                                            </div>`);
+          }
+
+        });
+
+        $group.append($buttons);
+        $group.append(`<div class="row collapse preview" id="${buttonId}">
+                        <div class="col col-md-6 card card-body from"></div>
+                        <div class="col col-md-6 card card-body to"></div>
+                      </div>`);
       }
     }
 
