@@ -33,475 +33,64 @@ Merge similar rules, reduce redundancy, and simplify your Azure Firewall configu
     "ruleCollectionGroups": {
       "value": [
         {
-          "name": "rcg-prod-eastus",
+          "name": "rcg-example",
           "properties": {
             "priority": 100,
             "ruleCollections": [
               {
-                "name": "rc-net-allow-core",
+                "name": "rc-network-rules",
                 "ruleCollectionType": "FirewallPolicyFilterRuleCollection",
                 "priority": 100,
-                "action": {
-                  "type": "Allow"
-                },
+                "action": { "type": "Allow" },
                 "rules": [
                   {
-                    "name": "net-web-443-from-app1",
+                    "name": "allow-web-traffic-1",
                     "ruleType": "NetworkRule",
-                    "ipProtocols": [
-                      "TCP"
-                    ],
-                    "sourceAddresses": [
-                      "10.10.1.0/24"
-                    ],
-                    "destinationAddresses": [
-                      "20.30.40.10"
-                    ],
-                    "destinationPorts": [
-                      "443"
-                    ]
+                    "ipProtocols": ["TCP"],
+                    "sourceAddresses": ["10.10.1.0/24"],
+                    "destinationAddresses": ["20.30.40.10"],
+                    "destinationPorts": ["443"]
                   },
                   {
-                    "name": "net-web-443-from-app2",
+                    "name": "allow-web-traffic-2",
                     "ruleType": "NetworkRule",
-                    "ipProtocols": [
-                      "TCP"
-                    ],
-                    "sourceAddresses": [
-                      "10.10.2.0/24"
-                    ],
-                    "destinationAddresses": [
-                      "20.30.40.10"
-                    ],
-                    "destinationPorts": [
-                      "443"
-                    ]
-                  },
-                  {
-                    "name": "net-web-443-from-app3",
-                    "ruleType": "NetworkRule",
-                    "ipProtocols": [
-                      "TCP"
-                    ],
-                    "sourceAddresses": [
-                      "10.10.3.0/24"
-                    ],
-                    "destinationAddresses": [
-                      "20.30.40.10"
-                    ],
-                    "destinationPorts": [
-                      "443"
-                    ]
-                  },
-                  {
-                    "name": "net-db-multiport-same-source-a",
-                    "ruleType": "NetworkRule",
-                    "ipProtocols": [
-                      "TCP"
-                    ],
-                    "sourceAddresses": [
-                      "10.20.1.0/24"
-                    ],
-                    "destinationAddresses": [
-                      "172.16.10.5"
-                    ],
-                    "destinationPorts": [
-                      "1433"
-                    ]
-                  },
-                  {
-                    "name": "net-db-multiport-same-source-b",
-                    "ruleType": "NetworkRule",
-                    "ipProtocols": [
-                      "TCP"
-                    ],
-                    "sourceAddresses": [
-                      "10.20.1.0/24"
-                    ],
-                    "destinationAddresses": [
-                      "172.16.10.5"
-                    ],
-                    "destinationPorts": [
-                      "1434"
-                    ]
-                  },
-                  {
-                    "name": "net-backup-fqdn-a",
-                    "ruleType": "NetworkRule",
-                    "ipProtocols": [
-                      "TCP"
-                    ],
-                    "sourceAddresses": [
-                      "10.30.1.0/24"
-                    ],
-                    "destinationFqdns": [
-                      "backup.contoso.net"
-                    ],
-                    "destinationPorts": [
-                      "443"
-                    ]
-                  },
-                  {
-                    "name": "net-backup-fqdn-b",
-                    "ruleType": "NetworkRule",
-                    "ipProtocols": [
-                      "TCP"
-                    ],
-                    "sourceAddresses": [
-                      "10.30.2.0/24"
-                    ],
-                    "destinationFqdns": [
-                      "backup.contoso.net"
-                    ],
-                    "destinationPorts": [
-                      "443"
-                    ]
-                  },
-                  {
-                    "name": "net-no-merge-different-dest",
-                    "ruleType": "NetworkRule",
-                    "ipProtocols": [
-                      "TCP"
-                    ],
-                    "sourceAddresses": [
-                      "10.10.4.0/24"
-                    ],
-                    "destinationAddresses": [
-                      "20.30.40.11"
-                    ],
-                    "destinationPorts": [
-                      "443"
-                    ]
+                    "ipProtocols": ["TCP"],
+                    "sourceAddresses": ["10.10.2.0/24"],
+                    "destinationAddresses": ["20.30.40.10"],
+                    "destinationPorts": ["443"]
                   }
                 ]
               },
               {
-                "name": "rc-nat-publish-core",
+                "name": "rc-nat-rules",
                 "ruleCollectionType": "FirewallPolicyNatRuleCollection",
                 "priority": 200,
-                "action": {
-                  "type": "Dnat"
-                },
+                "action": { "type": "Dnat" },
                 "rules": [
                   {
-                    "name": "nat-rdp-host1",
+                    "name": "nat-rdp",
                     "ruleType": "NatRule",
-                    "ipProtocols": [
-                      "TCP"
-                    ],
-                    "sourceAddresses": [
-                      ""
-                    ],
-                    "destinationAddresses": [
-                      "52.160.10.10"
-                    ],
-                    "destinationPorts": [
-                      "50001"
-                    ],
+                    "ipProtocols": ["TCP"],
+                    "sourceAddresses": ["*"],
+                    "destinationAddresses": ["52.160.10.10"],
+                    "destinationPorts": ["50001"],
                     "translatedAddress": "10.0.10.4",
                     "translatedPort": "3389"
-                  },
-                  {
-                    "name": "nat-rdp-host2",
-                    "ruleType": "NatRule",
-                    "ipProtocols": [
-                      "TCP"
-                    ],
-                    "sourceAddresses": [
-                      ""
-                    ],
-                    "destinationAddresses": [
-                      "52.160.10.10"
-                    ],
-                    "destinationPorts": [
-                      "50002"
-                    ],
-                    "translatedAddress": "10.0.10.4",
-                    "translatedPort": "3389"
-                  },
-                  {
-                    "name": "nat-rdp-host3",
-                    "ruleType": "NatRule",
-                    "ipProtocols": [
-                      "TCP"
-                    ],
-                    "sourceAddresses": [
-                      ""
-                    ],
-                    "destinationAddresses": [
-                      "52.160.10.10"
-                    ],
-                    "destinationPorts": [
-                      "50003"
-                    ],
-                    "translatedAddress": "10.0.10.4",
-                    "translatedPort": "3389"
-                  },
-                  {
-                    "name": "nat-no-merge-different-translated-port",
-                    "ruleType": "NatRule",
-                    "ipProtocols": [
-                      "TCP"
-                    ],
-                    "sourceAddresses": [
-                      ""
-                    ],
-                    "destinationAddresses": [
-                      "52.160.10.10"
-                    ],
-                    "destinationPorts": [
-                      "50004"
-                    ],
-                    "translatedAddress": "10.0.10.4",
-                    "translatedPort": "3390"
                   }
                 ]
               },
               {
-                "name": "rc-app-web-egress",
+                "name": "rc-app-rules",
                 "ruleCollectionType": "FirewallPolicyFilterRuleCollection",
                 "priority": 300,
-                "action": {
-                  "type": "Allow"
-                },
+                "action": { "type": "Allow" },
                 "rules": [
                   {
-                    "name": "app-msft-login-team-a",
+                    "name": "allow-login",
                     "ruleType": "ApplicationRule",
-                    "sourceAddresses": [
-                      "10.40.1.0/24"
-                    ],
-                    "targetFqdns": [
-                      "login.microsoftonline.com"
-                    ],
-                    "protocols": [
-                      {
-                        "protocolType": "Https",
-                        "port": 443
-                      }
-                    ]
-                  },
-                  {
-                    "name": "app-msft-login-team-b",
-                    "ruleType": "ApplicationRule",
-                    "sourceAddresses": [
-                      "10.40.2.0/24"
-                    ],
-                    "targetFqdns": [
-                      "login.microsoftonline.com"
-                    ],
-                    "protocols": [
-                      {
-                        "protocolType": "Https",
-                        "port": 443
-                      }
-                    ]
-                  },
-                  {
-                    "name": "app-msft-login-team-c",
-                    "ruleType": "ApplicationRule",
-                    "sourceAddresses": [
-                      "10.40.3.0/24"
-                    ],
-                    "targetFqdns": [
-                      "login.microsoftonline.com"
-                    ],
-                    "protocols": [
-                      {
-                        "protocolType": "Https",
-                        "port": 443
-                      }
-                    ]
-                  },
-                  {
-                    "name": "app-github-http-https-a",
-                    "ruleType": "ApplicationRule",
-                    "sourceAddresses": [
-                      "10.50.1.0/24"
-                    ],
-                    "targetFqdns": [
-                      "api.github.com"
-                    ],
-                    "protocols": [
-                      {
-                        "protocolType": "Http",
-                        "port": 80
-                      },
-                      {
-                        "protocolType": "Https",
-                        "port": 443
-                      }
-                    ]
-                  },
-                  {
-                    "name": "app-github-http-https-b",
-                    "ruleType": "ApplicationRule",
-                    "sourceAddresses": [
-                      "10.50.1.0/24"
-                    ],
-                    "targetFqdns": [
-                      "api.github.com"
-                    ],
-                    "protocols": [
-                      {
-                        "protocolType": "Https",
-                        "port": 443
-                      },
-                      {
-                        "protocolType": "Http",
-                        "port": 80
-                      }
-                    ]
-                  },
-                  {
-                    "name": "app-no-merge-different-protocol",
-                    "ruleType": "ApplicationRule",
-                    "sourceAddresses": [
-                      "10.40.4.0/24"
-                    ],
-                    "targetFqdns": [
-                      "login.microsoftonline.com"
-                    ],
-                    "protocols": [
-                      {
-                        "protocolType": "Http",
-                        "port": 80
-                      }
-                    ]
-                  }
-                ]
-              }
-            ]
-          }
-        },
-        {
-          "name": "rcg-prod-westus",
-          "properties": {
-            "priority": 110,
-            "ruleCollections": [
-              {
-                "name": "rc-net-allow-secondary",
-                "ruleCollectionType": "FirewallPolicyFilterRuleCollection",
-                "priority": 100,
-                "action": {
-                  "type": "Allow"
-                },
-                "rules": [
-                  {
-                    "name": "net-cross-collection-part-1",
-                    "ruleType": "NetworkRule",
-                    "ipProtocols": [
-                      "TCP"
-                    ],
-                    "sourceAddresses": [
-                      "10.60.1.0/24"
-                    ],
-                    "destinationAddresses": [
-                      "203.0.113.50"
-                    ],
-                    "destinationPorts": [
-                      "443"
-                    ]
-                  },
-                  {
-                    "name": "net-cross-collection-part-2",
-                    "ruleType": "NetworkRule",
-                    "ipProtocols": [
-                      "TCP"
-                    ],
-                    "sourceAddresses": [
-                      "10.60.2.0/24"
-                    ],
-                    "destinationAddresses": [
-                      "203.0.113.50"
-                    ],
-                    "destinationPorts": [
-                      "443"
-                    ]
-                  }
-                ]
-              },
-              {
-                "name": "rc-net-allow-secondary-2",
-                "ruleCollectionType": "FirewallPolicyFilterRuleCollection",
-                "priority": 101,
-                "action": {
-                  "type": "Allow"
-                },
-                "rules": [
-                  {
-                    "name": "net-cross-collection-part-3",
-                    "ruleType": "NetworkRule",
-                    "ipProtocols": [
-                      "TCP"
-                    ],
-                    "sourceAddresses": [
-                      "10.60.3.0/24"
-                    ],
-                    "destinationAddresses": [
-                      "203.0.113.50"
-                    ],
-                    "destinationPorts": [
-                      "443"
-                    ]
-                  },
-                  {
-                    "name": "net-cross-collection-part-4",
-                    "ruleType": "NetworkRule",
-                    "ipProtocols": [
-                      "TCP"
-                    ],
-                    "sourceAddresses": [
-                      "10.60.4.0/24"
-                    ],
-                    "destinationAddresses": [
-                      "203.0.113.50"
-                    ],
-                    "destinationPorts": [
-                      "443"
-                    ]
-                  }
-                ]
-              },
-              {
-                "name": "rc-app-ops-egress",
-                "ruleCollectionType": "FirewallPolicyFilterRuleCollection",
-                "priority": 300,
-                "action": {
-                  "type": "Allow"
-                },
-                "rules": [
-                  {
-                    "name": "app-monitoring-a",
-                    "ruleType": "ApplicationRule",
-                    "sourceAddresses": [
-                      "10.70.1.0/24"
-                    ],
-                    "targetFqdns": [
-                      "ingest.monitor.azure.com"
-                    ],
-                    "protocols": [
-                      {
-                        "protocolType": "Https",
-                        "port": 443
-                      }
-                    ]
-                  },
-                  {
-                    "name": "app-monitoring-b",
-                    "ruleType": "ApplicationRule",
-                    "sourceAddresses": [
-                      "10.70.2.0/24"
-                    ],
-                    "targetFqdns": [
-                      "ingest.monitor.azure.com"
-                    ],
-                    "protocols": [
-                      {
-                        "protocolType": "Https",
-                        "port": 443
-                      }
-                    ]
+                    "sourceAddresses": ["10.40.1.0/24"],
+                    "targetFqdns": ["login.microsoftonline.com"],
+                    "protocols": [{ "protocolType": "Https", "port": 443 }]
                   }
                 ]
               }
