@@ -15,6 +15,7 @@ Merge similar rules, reduce redundancy, and simplify your Azure Firewall configu
 - **One-click optimization**: Merge rules and update your JSON.
 - Supports **NetworkRule**, **NatRule**, and **ApplicationRule** collections.
 - Visual JSON rendering with [rainbowJSON](rainbowJSON/README.md).
+- GitHub icon at the far right of the footer links to this app's source repository.
 
 ## Usage
 
